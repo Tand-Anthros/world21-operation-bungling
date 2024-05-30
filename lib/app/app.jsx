@@ -1,10 +1,11 @@
+"use client";
 import { useState } from "react";
 import { Box, Button, Heading, Text, Spinner } from "@chakra-ui/react";
 
-const FetchElementHtml: React.FC = () => {
-  const [elementHtml, setElementHtml] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+const App = () => {
+  const [elementHtml, setElementHtml] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchElementHtml = async () => {
     try {
@@ -43,4 +44,4 @@ const FetchElementHtml: React.FC = () => {
   );
 };
 
-export default FetchElementHtml;
+export default App;
