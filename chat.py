@@ -1,3 +1,5 @@
+# сделать api как словарь. а так же сделать там стандартный ключ со значениями которые будут выставленны по умолчанию при запуске
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from selenium import webdriver
