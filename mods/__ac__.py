@@ -1,14 +1,19 @@
-import pickle
+import pickle, time
 
 
-def file(path, value = None):
+def sync(value: dict):
     if type(value).__name__ == 'dict':
-        with open(path, 'wb') as file:
+        with open(f'__pycache__/{__file__}.pkl', 'wb') as file:
             pickle.dump(value, file)
+        while True:
+            time.sleep(0.016)
+            try:
+                with open(f'__pycache__/~{__file__}.pkl', 'rb') as file:
+                    variable = pickle.load(file)
+                return variable
+            except FileNotFoundError: pass
     else:
-        with open(path, 'rb') as file:
-            variable = pickle.load(file)
-        return variable
+        raise AttributeError(f'\'{type(value).__name__}\' object is not supported')
 
 
 

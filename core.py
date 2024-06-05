@@ -1,4 +1,4 @@
-import platform, json, os, sys, multiprocessing, time
+import platform, json, os, sys, time, pickle, os, multiprocessing
 from mods.__ac__ import file as _file
 
 
@@ -29,6 +29,33 @@ if 'tools':
             except ValueError: 
                 try: return float(value)
                 except ValueError: return value
+
+
+if 'tasks':
+    def host(): # Если появятся проблемы, возможно стоит ренеймить файлы после записи, что бы во время записи, не было ошибок у другого процесса
+        root = file(sys.argv[1])
+
+        while 'host':
+            time.sleep(0.016)
+            pkl = None
+            while not pkl:
+                for filename in os.listdir('__pycache__'):
+                    if filename.endswith('.pkl') and not filename.startswith('~'):
+                        pkl = filename
+            
+            try:
+                with open(f'__pycache__/{pkl}', 'rb') as file:
+                    data = pickle.load(file)
+            except:
+                raise # проверить какая ошибка должна быть, если файл не бинарный
+
+            # работа с data...
+
+            with open(f'__pycache__/{pkl}', 'wb') as file:
+                pickle.dump(data, file)
+
+            file('__pycache__/__root__.json', root)
+            file(sys.argv[1], root)
 
 
 while 'console':
