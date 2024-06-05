@@ -1,4 +1,5 @@
 import platform, json, os, sys, multiprocessing, time
+from mods.__ac__ import file as _file
 
 
 if 'tools':
@@ -28,8 +29,6 @@ if 'tools':
             except ValueError: 
                 try: return float(value)
                 except ValueError: return value
-    from flask import Flask, render_template_string, request
-    from multiprocessing import Process
 
 
 while 'console':
