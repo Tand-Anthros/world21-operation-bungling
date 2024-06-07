@@ -1,4 +1,5 @@
-import platform, json, os, sys, time, pickle, os, psutil
+import platform, json, os, sys, time, pickle, os, psutil, traceback
+from mods import __ac__ as tools
 
 
 if 'tools':
@@ -11,12 +12,14 @@ if 'tools':
         with open(path, 'w') as file:
             json.dump(data, file, indent=4)
 
+
     def interface(*args):
         if platform.system() == 'Windows': os.system('cls')
         else: os.system('clear')
 
         for line in args[:-1]: print(line)
         return input(f'\n{args[-1]}')
+
 
     def convert(value):
         if value == '': return ''
@@ -28,6 +31,7 @@ if 'tools':
             except ValueError: 
                 try: return float(value)
                 except ValueError: return value
+
 
     def start(*args, window = True):
         r'''result.terminate() for close the running process or rough method .kill()'''
@@ -55,37 +59,53 @@ if 'tools':
 if 'tasks':
     def host(): 
         # Если появятся проблемы, возможно стоит ренеймить файлы после записи, что бы во время записи, не было ошибок у другого процесса
+        # Можно добавить список с названиями ожидающих значения процессов и отсылать их при первом же появлении
+        if not os.path.exists('__pycache__'): os.makedirs('__pycache__')
+        proc = start('D:\\Code\\world21-operation-bungling\\core.py', *sys.argv[1:], '__console__') #, window = False)
         root = file(sys.argv[1])
 
         while 'host':
-            time.sleep(0.016)
             pkl = None
             while not pkl:
+                time.sleep(0.016)
                 for filename in os.listdir('__pycache__'):
                     if filename.endswith('.pkl') and not filename.startswith('~'):
                         pkl = filename
-            
-            try:
-                with open(f'__pycache__/{pkl}', 'rb') as file:
-                    data = pickle.load(file)
-            except:
-                raise # проверить какая ошибка должна быть, если файл не бинарный
+                        
+            data = None
+            while not data:
+                try:
+                    with open(f'__pycache__/{pkl}', 'rb') as _file:
+                        data = pickle.load(_file)
+                except EOFError: time.sleep(0.016)
+                except: raise # проверить какая ошибка должна быть, если файл не бинарный
+            os.remove(f'__pycache__/{pkl}')
 
-            # работа с data...
+            out = {}
+            if type(data).__name__ == 'dict':
+                if data != {'':''}:
+                    for key in data.keys():
+                        if data[key] == '': out[key] = root.get(key)
+                        elif data[key] == None: root.pop(key)
+                        else: root[key] = data[key]
+                else: out = root
 
-            with open(f'__pycache__/{pkl}', 'wb') as file:
-                pickle.dump(data, file)
+            with open(f'__pycache__/~{pkl}', 'wb') as _file:
+                pickle.dump(out, _file)
 
-            file('__pycache__/__root__.json', root)
+            if root.get('exit'):
+                proc.terminate()
+                sys.exit()
+
             file(sys.argv[1], root)
+
 
     def console():
         while 'console':
             try:
-                root = file(sys.argv[1])
-                acts = {'$input': input}
+                root = tools.sync({'':''})
 
-                keys = ', '.join(root.keys()) + '\n' + ', '.join(acts.keys())
+                keys = ', '.join(root.keys())
                 key = interface('/root:', keys, '', '"key?" > ')
                 if key == '': continue
                 
@@ -98,25 +118,73 @@ if 'tasks':
                 elif value == None:
                     answer = interface(f'delete "{key}"?', '', f'(+, y, yes) > ')
                     if answer.lower() in ['+', 'y', 'yes', 'д', 'да']: 
-                        try: root.pop(key)
+                        try: tools.sync({key:value})
                         except KeyError: pass
-                    else: root[key] = value
-                else: root[key] = value
-                
-                file(sys.argv[1], root)
+                    else: continue
+                else: tools.sync({key:value})
 
             except KeyboardInterrupt: 
                 print('bye!')
-                sys.exit()
+                time.sleep(99999)
+                #sys.exit()
+            except:
+                traceback.print_exc()
+                time.sleep(99999)
+                
+
+    def api():
+        from flask import Flask, render_template_string, request
+
+        app = Flask(__name__)
+
+
+        index_html = r'''
+        <form method="post">
+            {% for key, value in dictionary.items() %}
+                <label for="{{ key }}">{{ key }}</label>
+                <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}"><br>
+            {% endfor %}<br>
+            
+            <input type="text" id="new_key" name="new_key" placeholder="Новый ключ">
+            <input type="text" id="new_value" name="new_value" placeholder="Новое значение"><br>
+            <button type="submit">Обновить</button>
+        </form>
+        '''
+
+
+        dictionary = {"ключ1": "знaчeниe1", "ключ2": "знaчeниe2"}
+
+        @app.route('/', methods=['GET', 'POST'])
+        def home():
+            if request.method == 'POST':
+                for key in dictionary.keys():
+                    dictionary[key] = request.form[key]
+                
+                new_key = request.form['new_key']
+                new_value = request.form['new_value']
+                if new_key and new_value:
+                    dictionary[new_key] = new_value
+            
+            return render_template_string(index_html, dictionary=dictionary)
+
+        @app.route('/<key>', methods=['GET', 'POST'])
+        def get_value(key):
+            if request.method == 'GET':
+                return dictionary.get(key, 'Nul'), 200
+            elif request.method == 'POST':
+                new_value = request.form.get('value')
+                if new_value:
+                    dictionary[key] = new_value
+                    return "True"
+                return "False"
+
+
+        if __name__ == '__main__':
+            app.run(debug=True)
 
 
 if 'launch':
-    if len(sys.argv) == 2:
-        proc = start('D:\\Code\\world21-operation-bungling\\core.py', *sys.argv[1:], '__console__')
-        print('5 секунд до закрытия...')
-        time.sleep(5)
-        proc.terminate()
-    elif len(sys.argv) == 3 and sys.argv[2] == '__console__':
-        console()
-    else:
-        print('write a project *.json file')
+    if len(sys.argv) == 2: host()
+    elif len(sys.argv) == 3 and sys.argv[2] == '__console__': console()
+    elif len(sys.argv) == 3 and sys.argv[2] == '__api__': api()
+    else: print('write a project *.json file')
