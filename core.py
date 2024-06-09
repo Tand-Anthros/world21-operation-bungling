@@ -137,8 +137,10 @@ if 'tasks':
 
     def api():
         from flask import Flask, render_template_string, request
+        from flask_cors import CORS
 
         app = Flask(__name__)
+        CORS(app)
 
         @app.route('/<key>', methods = ['GET', 'POST'])
         def get_value(key):
