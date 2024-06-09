@@ -61,7 +61,10 @@ if 'tasks':
         # Если появятся проблемы, возможно стоит ренеймить файлы после записи, что бы во время записи, не было ошибок у другого процесса
         # Можно добавить список с названиями ожидающих значения процессов и отсылать их при первом же появлении
         if not os.path.exists('__pycache__'): os.makedirs('__pycache__')
-        proc = start('D:\\Code\\world21-operation-bungling\\core.py', *sys.argv[1:], '__console__') #, window = False)
+        
+        procs = []
+        procs.append(start('D:\\Code\\world21-operation-bungling\\core.py', *sys.argv[1:], '__console__'))
+        procs.append(start('D:\\Code\\world21-operation-bungling\\core.py', *sys.argv[1:], '__api__'))
         root = file(sys.argv[1])
 
         while 'host':
@@ -94,7 +97,8 @@ if 'tasks':
                 pickle.dump(out, _file)
 
             if root.get('exit'):
-                proc.terminate()
+                for i in range(0, len(procs)):
+                    procs[i].kill()
                 sys.exit()
 
             file(sys.argv[1], root)
@@ -103,7 +107,7 @@ if 'tasks':
     def console():
         while 'console':
             try:
-                root = tools.sync({'':''})
+                root = tools.sync({'':''}, name = '__console__')
 
                 keys = ', '.join(root.keys())
                 key = interface('/root:', keys, '', '"key?" > ')
@@ -118,15 +122,14 @@ if 'tasks':
                 elif value == None:
                     answer = interface(f'delete "{key}"?', '', f'(+, y, yes) > ')
                     if answer.lower() in ['+', 'y', 'yes', 'д', 'да']: 
-                        try: tools.sync({key:value})
+                        try: tools.sync({key:value}, name = '__console__')
                         except KeyError: pass
                     else: continue
-                else: tools.sync({key:value})
+                else: tools.sync({key:value}, name = '__console__')
 
             except KeyboardInterrupt: 
                 print('bye!')
                 time.sleep(99999)
-                #sys.exit()
             except:
                 traceback.print_exc()
                 time.sleep(99999)
@@ -137,47 +140,30 @@ if 'tasks':
 
         app = Flask(__name__)
 
-
-        index_html = r'''
-        <form method="post">
-            {% for key, value in dictionary.items() %}
-                <label for="{{ key }}">{{ key }}</label>
-                <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}"><br>
-            {% endfor %}<br>
-            
-            <input type="text" id="new_key" name="new_key" placeholder="Новый ключ">
-            <input type="text" id="new_value" name="new_value" placeholder="Новое значение"><br>
-            <button type="submit">Обновить</button>
-        </form>
-        '''
-
-
-        dictionary = {"ключ1": "знaчeниe1", "ключ2": "знaчeниe2"}
-
-        @app.route('/', methods=['GET', 'POST'])
-        def home():
-            if request.method == 'POST':
-                for key in dictionary.keys():
-                    dictionary[key] = request.form[key]
-                
-                new_key = request.form['new_key']
-                new_value = request.form['new_value']
-                if new_key and new_value:
-                    dictionary[new_key] = new_value
-            
-            return render_template_string(index_html, dictionary=dictionary)
-
-        @app.route('/<key>', methods=['GET', 'POST'])
+        @app.route('/<key>', methods = ['GET', 'POST'])
         def get_value(key):
             if request.method == 'GET':
-                return dictionary.get(key, 'Nul'), 200
+                return str(tools.sync({key:''}, name = '__api__')[key]), 200
             elif request.method == 'POST':
-                new_value = request.form.get('value')
-                if new_value:
-                    dictionary[key] = new_value
+                value = request.form.get('value')
+                if value:
+                    tools.sync({key:value}, name = '__api__')
                     return "True"
                 return "False"
+            
+        @app.route('/<key>/<value>', methods = ['GET'])
+        def set_value(key, value):
+            if key == "''": key = ''
+            if value == "''": value = ''
+            value = convert(value)
 
+            if key == '' and value == '':
+                return tools.sync({key:value})
+            elif value != None:
+                tools.sync({key:value}, name = '__api__')
+                return 'True'
+            else:
+                return 'False'
 
         if __name__ == '__main__':
             app.run(debug=True)
