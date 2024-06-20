@@ -1,5 +1,4 @@
-import os, platform, sys, time, pickle, traceback
-# os.system('pip3 install psutil flask selenium webdriver_manager pygetwindow')
+import os, platform, sys, time, traceback
 from mods import __ac__ as tools
 
 

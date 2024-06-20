@@ -1,5 +1,8 @@
-import pickle, time, os, inspect, json, random, platform
-import psutil, pygetwindow, win32api, win32con, win32process
+import pickle, time, os, sys, inspect, json, random, platform
+try: import psutil, pygetwindow, win32api, win32con, win32process, flask, flask_cors
+except: 
+    os.system('pip3 install psutil flask flask_cors selenium webdriver_manager pygetwindow')
+    sys.exit()
 
 
 if 'tools':
