@@ -44,7 +44,7 @@ if 'tools':
                 i += 1
 
 
-    def sync(value: dict, name: str = None):
+    def sync(value: dict, name: str = None): #всегда возвращает словарь, а так же не ломается при ошибке
         if not name: 
             name = inspect.getmodule(inspect.currentframe().f_back)
             name = name.__file__.split("\\")[-1:][0][:-3]

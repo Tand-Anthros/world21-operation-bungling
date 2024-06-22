@@ -4,9 +4,6 @@ from mods import __ac__ as tools
 
 if 'tasks':
     def host(): 
-        # Если появятся проблемы, возможно стоит ренеймить файлы после записи, что бы во время записи, не было ошибок у другого процесса
-        # Можно добавить список с названиями ожидающих значения процессов и отсылать их при первом же появлении
-
         if not os.path.exists('__pycache__'): os.makedirs('__pycache__')
         for filename in os.listdir('__pycache__'):
             if filename.endswith('.pkl'): 
@@ -95,15 +92,15 @@ if 'tasks':
 
         @app.route('/<key>', methods = ['GET', 'POST'])
         def get_value(key):
-            # <iframe src="http://localhost:3000" style="width:100%; height:500px; border:none;"></iframe>
+            # <iframe src="http://localhost:3000" style="width:100%; height:500px; border:none;"></iframe> #для объектов
             if request.method == 'GET':
-                return str(tools.sync({key:''}, name = '__api__')[key]), 200
+                return str(tools.sync({key: ''}, name = '__api__')[key]), 200
             elif request.method == 'POST':
                 value = request.form.get('value')
                 if value:
                     tools.sync({key:value}, name = '__api__')
-                    return "True"
-                return "False"
+                    return 'True'
+                return 'False'
             
         @app.route('/<key>/<value>', methods = ['GET'])
         def set_value(key, value):
@@ -112,12 +109,10 @@ if 'tasks':
             value = tools.convert(value)
 
             if key == '' and value == '':
-                return tools.sync({key:value})
-            elif value != None:
+                return tools.sync({key:value}, name = '__api__')
+            else:
                 tools.sync({key:value}, name = '__api__')
                 return 'True'
-            else:
-                return 'False'
 
         if __name__ == '__main__':
             app.run(debug=True)

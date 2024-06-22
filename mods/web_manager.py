@@ -1,68 +1,56 @@
-# сделать api как словарь. а так же сделать там стандартный ключ со значениями которые будут выставленны по умолчанию при запуске
+import os, time
+import __ac__ as tools
 
-from flask import Flask, jsonify
-from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
-import os
-
-app = Flask(__name__)
-CORS(app, origins="http://localhost:3000")  # Разрешить запросы только с http://localhost:3000
-
-@app.route('/get-element-html', methods=['GET'])
-def get_element_html():
-    # options = webdriver.FirefoxOptions()
-    # options.profile = f'C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\syly4wu8.default-release'
-
-    # driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-    # driver.get('https://vk.com/im?sel=221270089')
-
-    # try:
-    #     element = driver.find_element(By.CLASS_NAME, '_im_peer_history')
-    #     element_html = element.get_attribute('outerHTML')
-    # except Exception as e:
-    #     driver.quit()
-    #     return jsonify({'error': str(e)}), 500
-
-    # driver.quit()
-    with open('element.html', 'r', encoding='utf-8', errors='ignore') as file:
-        element_html = file.read()
-    return jsonify({'element_html': element_html})
-
-if __name__ == '__main__':
-    app.run(port=5000)
 
 
+def start_driver():
+    try:          
+        path = f'C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles'
+        for name in os.listdir(path):
+            if '.default-release' in name: profile = path + '\\' + name
+        profile
+    except: raise Exception('firefox profile not exist')
+
+    options = webdriver.FirefoxOptions()
+    options.profile = profile
+
+    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
+    return driver
 
 
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.firefox.service import Service as FirefoxService
-# from webdriver_manager.firefox import GeckoDriverManager
-# import threading
-# import time, os
+driver = start_driver()
+driver.get('https://vk.com/im?sel=266717581')
 
+while not tools.sync({'exit': ''}).get('exit'):
+    try:
+        element = driver.find_element(By.CLASS_NAME, '_im_peer_history')
+        print(element)
 
-# def open_browser():
-#     options = webdriver.FirefoxOptions()
-#     options.profile = f'C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\syly4wu8.default-release'
+        out = []
+        for elm in element.find_elements(By.CLASS_NAME, '_im_mess_stack'):
+            content = elm.find_element(By.CLASS_NAME, '_im_log_body')
+            author = elm.find_element(By.CLASS_NAME, 'im-mess-stack--lnk')
+            out.append(content.get_attribute('outerHTML') + author.text)
+            
+        out = '<div>' + ''.join(out) + '</div>'
+        tools.sync({'messages': out})
+
+        answer = tools.sync({'answer': ''})['answer']
+        if answer:
+            input_box = driver.find_element(By.CLASS_NAME, 'im_editable')
+            input_box.send_keys(answer)
+            input_box.send_keys(Keys.RETURN)
+            tools.sync({'answer': None})
+
+    except Exception as e:
+        driver.quit()
+        raise
+
+    time.sleep(1)
     
-#     driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-#     driver.get('https://vk.com/im?sel=221270089')
-    
-#     element = driver.find_element(By.CLASS_NAME, '_im_peer_history')
-    
-#     with open('element.html', 'w', encoding='utf-8') as file:
-#         file.write(element.get_attribute('outerHTML'))
-    
-#     # time.sleep(99999)
-#     driver.quit()
-
-
-# if __name__ == "__main__":
-#     window_1 = threading.Thread(target=open_browser) #args=(, ))
-#     window_1.start()
-#     window_1.join()
+driver.quit()
