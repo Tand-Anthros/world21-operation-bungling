@@ -11,7 +11,10 @@ if 'tasks':
         
         tools.start('python', __file__, *sys.argv[1:], '__console__')
         tools.start('python', __file__, *sys.argv[1:], '__api__')
+
         root = tools.file(sys.argv[1])
+        if root.get('$exit') != False:
+            root['$exit'] = False
 
         while 'host':
             pkl = None
@@ -38,14 +41,14 @@ if 'tasks':
             tools.file(f'__pycache__/~{pkl[1:]}', out)
             tools.move(f'__pycache__/~{pkl[1:]}', f'__pycache__/={pkl[1:]}')
 
-            if root.get('exit'):
+            if root.get('$exit') in [([True], {}), True]:
                 tools.close('')
                 sys.exit()
 
             tools.file(sys.argv[1], root)
 
 
-    def console():
+    def console(): # возможно нужно проверять значение не посредственно перед выводом тоже
         def interface(*args):
             if platform.system() == 'Windows': os.system('cls')
             else: os.system('clear')

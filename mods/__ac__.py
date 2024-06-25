@@ -44,19 +44,28 @@ if 'tools':
                 i += 1
 
 
-    def sync(value: dict, name: str = None): #всегда возвращает словарь, а так же не ломается при ошибке
-        if not name: 
-            name = inspect.getmodule(inspect.currentframe().f_back)
-            name = name.__file__.split("\\")[-1:][0][:-3]
+    def sync(value: dict, name: str = None):
+        try:
+            if not name: 
+                name = inspect.getmodule(inspect.currentframe().f_back)
+                name = name.__file__.split("\\")[-1:][0][:-3]
 
-        if type(value).__name__ == 'dict':
-            file(f'__pycache__/{name}.pkl', value)
-            move(f'__pycache__/{name}.pkl', f'__pycache__/-{name}.pkl')
-            variable = file(f'__pycache__/={name}.pkl')
-            move(f'__pycache__/={name}.pkl')
-            return variable
-        else:
-            raise AttributeError(f'\'{type(value).__name__}\' object is not supported')
+            if type(value).__name__ == 'dict':
+                file(f'__pycache__/{name}.pkl', value)
+                move(f'__pycache__/{name}.pkl', f'__pycache__/-{name}.pkl')
+                variable = file(f'__pycache__/={name}.pkl')
+                move(f'__pycache__/={name}.pkl')
+                for key in value:
+                    if key not in variable.keys() and key != '':
+                        variable[key] = None
+                return variable
+            else:
+                raise AttributeError(f'\'{type(value).__name__}\' object is not supported')
+            
+        except Exception as e: print(e)
+        for key in value.keys():
+            value[key] = None
+        return value
 
 
     def convert(value):
@@ -94,6 +103,34 @@ if 'tools':
         else: psutil.Popen(["cmd", "/k", *args], shell = True)
 
         return [close, [f'title AC-Child-{name}']]
+
+
+    def actions(acts: list):
+        name = inspect.getmodule(inspect.currentframe().f_back)
+        name = name.__file__.split("\\")[-1:][0][:-3]
+
+        added = {}
+        request = {}
+        for act in acts:
+            added[f'${act.__name__}'] = act
+            request[f'${act.__name__}'] = ''
+        request = sync(request, name)
+
+        for act in request.keys():
+            if type(request[act]).__name__ == 'tuple' and len(request[act]) == 2:
+                if type(request[act][0]).__name__ == 'list':
+                    if type(request[act][1]).__name__ == 'dict':
+                        result = added[act](*request[act][0], **request[act][1])
+                        sync({act: result}, name)
+
+
+    def objects(objs):
+        r'''Работают так же как и actions, только это компоненты js'''
+
+
+    def contexts(ctxs):
+        r'''По сути наш основная база root это основной контекст. Остальные как бы копируют содержимое рут и использует копии, изоляция позволяет создавать уникальные состояния приложения'''
+
 
 
 if 'beta':
